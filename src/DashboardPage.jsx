@@ -10,8 +10,6 @@
 // ============================================================
 
 import { useState, useEffect } from "react";
-import { db } from "./firebase";
-import { doc, onSnapshot, setDoc, serverTimestamp } from "firebase/firestore";
 import StagedLoading from "./components/StagedLoading";
 import { getSummaryApiUrl } from "./api";
 
@@ -84,12 +82,7 @@ export default function DashboardPage({ initialQuery = "trump recent", onNewDigg
 
       setLoading(false);
 
-      // 3. Optional: Record request
-      await setDoc(doc(db, "requests", sessionId), {
-        query: q,
-        timestamp: serverTimestamp(),
-        status: "completed_via_func"
-      });
+      // 3. Optional: Record request (PostgreSQL integration can be added later)
 
     } catch (e) {
       console.error("Connection error:", e);
