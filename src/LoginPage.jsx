@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState } from "react";
+import { loginUser, signupUser } from "./api";
 
 export default function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");   // "login" | "signup"
@@ -19,15 +20,23 @@ export default function LoginPage({ onLogin }) {
   const submit = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
+    if (tab === "signup" && (!name || !phone)) { setError("Please fill in all fields."); return; }
+    
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1100));   // simulate auth
-    setLoading(false);
-    onLogin({
-      name: name || email.split("@")[0],
-      email,
-      phone: phone,
-      country: "United States",
-    });
+    try {
+      let data;
+      if (tab === "login") {
+        data = await loginUser(email, password);
+      } else {
+        data = await signupUser({ email, password, name, phone });
+      }
+      
+      setLoading(false);
+      onLogin(data.user);
+    } catch (err) {
+      setLoading(false);
+      setError(err.message || "Something went wrong. Please try again.");
+    }
   };
 
   return (
