@@ -84,16 +84,13 @@ export default function LoginPage({ onLogin }) {
         boxShadow: "0 28px 72px rgba(0,0,0,.25)",
       }}>
         {/* tabs */}
-        <div style={{ display: "flex", background: "rgba(0,0,0,.22)", borderRadius: 11, padding: 3, marginBottom: 28, gap: 3 }}>
-          {[["login", "Sign In"], ["signup", "Sign Up"]].map(([t, label]) => (
-            <button key={t} className="lg-tab" onClick={() => { setTab(t); setError(""); }} style={{
-              flex: 1, padding: "9px 0", borderRadius: 9, border: "none", cursor: "pointer",
-              background: tab === t ? "rgba(255,255,255,.22)" : "transparent",
-              color: tab === t ? "#fff" : "rgba(255,255,255,.5)",
-              fontSize: 13, fontWeight: tab === t ? 600 : 400,
-              transition: "all .18s",
-            }}>{label}</button>
-          ))}
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "#fff", textAlign: "center", marginBottom: 8 }}>
+            {tab === "login" ? "Welcome Back" : "Create Account"}
+          </h2>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,.5)", textAlign: "center" }}>
+            {tab === "login" ? "Log in to your account to continue" : "Join us and start your journey"}
+          </p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -156,7 +153,7 @@ export default function LoginPage({ onLogin }) {
           }}>
             {loading
               ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,.3)", borderTop: "2px solid #fff", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} /> Signing in…</>
-              : tab === "login" ? "Sign In →" : "Create Account →"
+              : tab === "login" ? "Login →" : "Create Account →"
             }
           </button>
 
@@ -187,6 +184,21 @@ export default function LoginPage({ onLogin }) {
                 {p}
               </button>
             ))}
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 10 }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,.5)" }}>
+              {tab === "login" ? "Don't have an account? " : "Already have an account? "}
+              <button 
+                onClick={() => { setTab(tab === "login" ? "signup" : "login"); setError(""); }}
+                style={{ 
+                  background: "none", border: "none", color: "#fff", fontWeight: 700, 
+                  cursor: "pointer", padding: 0, textDecoration: "underline" 
+                }}
+              >
+                {tab === "login" ? "Sign up" : "Log in"}
+              </button>
+            </span>
           </div>
         </div>
       </div>
