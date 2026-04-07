@@ -35,38 +35,3 @@ export async function fetchSummaryPreview(query) {
 
   return response.json();
 }
-export function getAuthApiUrl(endpoint) {
-  const configuredUrl = process.env.REACT_APP_AUTH_API_URL?.trim() || "http://localhost:5001";
-  const normalizedUrl = withProtocol(configuredUrl);
-  return `${normalizedUrl.replace(/\/+$/, "")}/api/auth/${endpoint.replace(/^\/+/, "")}`;
-}
-
-export async function loginUser(email, password) {
-  const response = await fetch(getAuthApiUrl("login"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Login failed");
-  }
-
-  return data;
-}
-
-export async function signupUser(user_data) {
-  const response = await fetch(getAuthApiUrl("signup"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(user_data)
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Signup failed");
-  }
-
-  return data;
-}
