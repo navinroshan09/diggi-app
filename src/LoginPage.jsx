@@ -4,21 +4,90 @@
 // Props: onLogin(user) — called after successful sign-in
 // ============================================================
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");   // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPass] = useState("");
+  const [confPass, setConfPass] = useState("");
   const [name, setName] = useState("");
   const [phone, setphone] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [country, setCountry] = useState("");
+  const [pfp, setPfp] = useState(null);
+  const [captchaIn, setCaptchaIn] = useState("");
+  const [captchaVal, setCaptchaVal] = useState("");
+  const canvasRef = useRef(null);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (tab === "signup") genCaptcha();
+  }, [tab]);
+
+  const genCaptcha = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let val = "";
+    for (let i = 0; i < 6; i++) val += chars[Math.floor(Math.random() * chars.length)];
+    setCaptchaVal(val);
+    setCaptchaIn("");
+    
+    setTimeout(() => {
+      const cvs = canvasRef.current;
+      if (!cvs) return;
+      const ctx = cvs.getContext("2d");
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+      
+      // bg noise
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.2})`;
+        ctx.beginPath();
+        ctx.arc(Math.random() * cvs.width, Math.random() * cvs.height, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // lines
+      for (let i = 0; i < 5; i++) {
+        ctx.strokeStyle = `rgba(255,255,255,${Math.random() * 0.3})`;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * cvs.width, Math.random() * cvs.height);
+        ctx.lineTo(Math.random() * cvs.width, Math.random() * cvs.height);
+        ctx.stroke();
+      }
+
+      // text
+      ctx.font = "bold 26px 'Courier New', monospace";
+      ctx.textBaseline = "middle";
+      const spacing = cvs.width / (val.length + 1);
+      
+      for (let i = 0; i < val.length; i++) {
+        const x = (i + 0.8) * spacing;
+        const y = cvs.height / 2 + (Math.random() * 10 - 5);
+        const rot = (Math.random() * 0.4 - 0.2);
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.fillStyle = `rgba(255,255,255,${0.7 + Math.random() * 0.3})`;
+        ctx.fillText(val[i], 0, 0);
+        ctx.restore();
+      }
+    }, 50);
+  };
+
   const submit = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
+    
+    if (tab === "signup") {
+      if (!name || !phone || !dob || !gender || !country) { setError("Please fill in all required fields."); return; }
+      if (password !== confPass) { setError("Passwords do not match."); return; }
+      if (captchaIn.toUpperCase() !== captchaVal) { setError("Incorrect captcha."); genCaptcha(); return; }
+    }
+
     setLoading(true);
     await new Promise(r => setTimeout(r, 1100));   // simulate auth
     setLoading(false);
@@ -26,7 +95,10 @@ export default function LoginPage({ onLogin }) {
       name: name || email.split("@")[0],
       email,
       phone: phone,
-      country: "United States",
+      dob,
+      gender,
+      pfp,
+      country,
     });
   };
 
@@ -110,24 +182,101 @@ export default function LoginPage({ onLogin }) {
                 style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff" }} />
             </div>
           )}
+
+          {/* DOB & Gender */}
+          {tab === "signup" && (
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Date of Birth</label>
+                <input className="lg-input" type="date" value={dob} onChange={e => setDob(e.target.value)}
+                  style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "11px 15px", fontSize: 14, color: "#fff" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Gender</label>
+                <select className="lg-input" value={gender} onChange={e => setGender(e.target.value)}
+                  style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff", appearance: "none" }}>
+                  <option value="" disabled style={{ color: "#000" }}>Select</option>
+                  <option value="male" style={{ color: "#000" }}>Male</option>
+                  <option value="female" style={{ color: "#000" }}>Female</option>
+                  <option value="other" style={{ color: "#000" }}>Other</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Country */}
+          {tab === "signup" && (
+            <div>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Country</label>
+              <select className="lg-input" value={country} onChange={e => setCountry(e.target.value)}
+                style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff", appearance: "none" }}>
+                <option value="" disabled style={{ color: "#000" }}>Select Country</option>
+                <option value="India" style={{ color: "#000" }}>India</option>
+                <option value="USA" style={{ color: "#000" }}>United States</option>
+                <option value="UK" style={{ color: "#000" }}>United Kingdom</option>
+                <option value="Canada" style={{ color: "#000" }}>Canada</option>
+                <option value="Australia" style={{ color: "#000" }}>Australia</option>
+                <option value="Germany" style={{ color: "#000" }}>Germany</option>
+                <option value="France" style={{ color: "#000" }}>France</option>
+              </select>
+            </div>
+          )}
+
+          {/* Profile pic */}
+          {tab === "signup" && (
+            <div>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Profile pic (Optional)</label>
+              <div style={{ position: "relative", overflow: "hidden" }}>
+                <button className="lg-social" style={{ width: "100%", padding: "11px", fontSize: 12, background: "rgba(255,255,255,.1)", border: "1.5px dashed rgba(255,255,255,.3)", borderRadius: 11, color: "rgba(255,255,255,.7)" }}>
+                  {pfp ? "Chosen ✓" : "Upload Image"}
+                </button>
+                <input type="file" accept="image/*" onChange={e => setPfp(e.target.files[0])} 
+                  style={{ position: "absolute", top: 0, left: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }} />
+              </div>
+            </div>
+          )}
+
           {/* email */}
           <div>
             <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
-            <input className="lg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="mjdancer@moonwalk.com"
+            <input className="lg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Email Address"
               style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff" }} />
           </div>
-
+          
           {/* password */}
           <div>
             <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Password</label>
-            <div style={{ position: "relative" }}>
-              <input className="lg-input" type={showPw ? "text" : "password"} value={password} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="••••••••"
-                style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 46px 12px 15px", fontSize: 14, color: "#fff" }} />
-              <button onClick={() => setShowPw(s => !s)} style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 10, letterSpacing: .5, fontWeight: 600 }}>
-                {showPw ? "HIDE" : "SHOW"}
-              </button>
-            </div>
+            <input className="lg-input" type={showPw ? "text" : "password"} value={password} onChange={e => setPass(e.target.value)} placeholder="••••••••"
+              style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff" }} />
           </div>
+
+          {/* confirm password */}
+          {tab === "signup" && (
+            <div>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Confirm Password</label>
+              <input className="lg-input" type={showPw ? "text" : "password"} value={confPass} onChange={e => setConfPass(e.target.value)} placeholder="••••••••"
+                style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff" }} />
+            </div>
+          )}
+
+          {/* captcha */}
+          {tab === "signup" && (
+            <div style={{ background: "rgba(255,255,255,.05)", padding: "12px", borderRadius: 11, border: "1px solid rgba(255,255,255,.1)" }}>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Security Check</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <canvas ref={canvasRef} width="120" height="40" style={{ background: "rgba(0,0,0,0.3)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }} />
+                <input className="lg-input" value={captchaIn} onChange={e => setCaptchaIn(e.target.value)} placeholder="Type Code"
+                  style={{ flex: 1, minWidth: 0, background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "10px 12px", fontSize: 14, color: "#fff" }} />
+                <button onClick={genCaptcha} title="Refresh Captcha" style={{ 
+                  width: 38, height: 38, flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", 
+                  borderRadius: 10, color: "rgba(255,255,255,.6)", cursor: "pointer", fontSize: 18,
+                  transition: "background 0.2s"
+                }}>↺</button>
+              </div>
+            </div>
+          )}
 
           {/* forgot */}
           {tab === "login" && (
