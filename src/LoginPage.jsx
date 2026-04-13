@@ -5,6 +5,7 @@
 // ============================================================
 
 import { useState, useEffect, useRef } from "react";
+import { loginUser, registerUser } from "./api";
 
 export default function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");   // "login" | "signup"
@@ -89,17 +90,33 @@ export default function LoginPage({ onLogin }) {
     }
 
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1100));   // simulate auth
-    setLoading(false);
-    onLogin({
-      name: name || email.split("@")[0],
-      email,
-      phone: phone,
-      dob,
-      gender,
-      pfp,
-      country,
-    });
+    try {
+      let res;
+      if (tab === "login") {
+        res = await loginUser(email, password);
+      } else {
+        res = await registerUser({
+          name,
+          email,
+          password,
+          phone,
+          dob,
+          gender,
+          country,
+        });
+      }
+      
+      // Success!
+      // You might want to store the token in localStorage here:
+      // if (res.token) localStorage.setItem("diggi_token", res.token);
+      
+      onLogin(res.user);
+    } catch (err) {
+      setError(err.message || "An error occurred during authentication.");
+      if (tab === "signup") genCaptcha();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
