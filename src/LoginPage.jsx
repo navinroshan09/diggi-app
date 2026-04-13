@@ -96,13 +96,14 @@ export default function LoginPage({ onLogin }) {
         res = await loginUser(email, password);
       } else {
         res = await registerUser({
-          name,
+          full_name: name,
           email,
           password,
           phone,
-          dob,
+          date_of_birth: dob,
           gender,
           country,
+          profile_pic: pfp ? pfp.name : "", // Sending filename or empty string as placeholder
         });
       }
       
