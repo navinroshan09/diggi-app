@@ -123,6 +123,7 @@ export default function App() {
       {screen === "profile" && (
         <ProfilePage
           user={user}
+          onUpdateUser={setUser}
           onBack={() => go(prev === "profile" ? "landing" : prev)}
           onLogout={() => { setUser(null); setQuery(""); setLandingQuery(""); go("login"); }}
         />

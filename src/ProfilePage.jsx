@@ -1,18 +1,45 @@
 import { useState, useRef } from "react";
 
-export default function ProfilePage({ user, onBack, onLogout }) {
+export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "Name");
-  const [photo, setPhoto] = useState(user?.photo || "user photo"); // URL for the photo
-  const [country, setCountry] = useState(user?.country || "Country");
+  
+  // Mapping API keys to state
+  const [name, setName] = useState(user?.full_name || user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [dob, setDob] = useState(user?.date_of_birth || user?.dob || "");
+  const [gender, setGender] = useState(user?.gender || "");
+  const [country, setCountry] = useState(user?.country || "");
+  const [photo, setPhoto] = useState(user?.profile_pic || user?.photo || ""); // URL/Base64 for the photo
+  
   const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const handleEditToggle = () => {
     if (isEditing) {
-      // Logic to "save" (just local state here)
-      console.log("Saved name:", name);
+      setLoading(true);
+      // Simulate API call
+      setTimeout(() => {
+        const updatedUser = {
+          ...user,
+          full_name: name,
+          email,
+          phone,
+          date_of_birth: dob,
+          gender,
+          country,
+          profile_pic: photo
+        };
+        // If onUpdateUser prop at exists, call it to update parent state
+        if (typeof onUpdateUser === "function") {
+          onUpdateUser(updatedUser);
+        }
+        setIsEditing(false);
+        setLoading(false);
+      }, 800);
+    } else {
+      setIsEditing(true);
     }
-    setIsEditing(!isEditing);
   };
 
   const handlePhotoChange = (e) => {
@@ -26,11 +53,16 @@ export default function ProfilePage({ user, onBack, onLogout }) {
     }
   };
 
-  const u = {
-    name,
-    email: user?.email || "Email Address",
-    phone: user?.phone || "Phone Number",
-    country,
+  const handleCancel = () => {
+    // Reset to current user values
+    setName(user?.full_name || user?.name || "");
+    setEmail(user?.email || "");
+    setPhone(user?.phone || "");
+    setDob(user?.date_of_birth || user?.dob || "");
+    setGender(user?.gender || "");
+    setCountry(user?.country || "");
+    setPhoto(user?.profile_pic || user?.photo || "");
+    setIsEditing(false);
   };
 
   return (
@@ -54,17 +86,30 @@ export default function ProfilePage({ user, onBack, onLogout }) {
         .pf-upgrade:hover { background: #fff !important; color: #1e2a3a !important; }
         .pf-footer-link:hover { text-decoration: underline; cursor: pointer; }
         
-        .edit-input {
-          background: #f4f6fa;
+        .edit-input, .edit-select {
+          background: rgba(255, 255, 255, 0.8);
           border: 1.5px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 6px 10px;
+          border-radius: 10px;
+          padding: 8px 12px;
           width: 100%;
           font-size: 14px;
           color: #1a1a2e;
           outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .edit-input:focus { border-color: #4a90d9; }
+        .edit-input:focus, .edit-select:focus { 
+          border-color: #4a90d9;
+          box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+        }
+        .edit-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #718096;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 4px;
+          display: block;
+        }
 
         @media (max-width: 768px) {
           .pf-card { padding: 24px 20px 20px !important; border-radius: 18px !important; }
@@ -132,25 +177,26 @@ export default function ProfilePage({ user, onBack, onLogout }) {
         </h1>
 
         <div className="pf-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 30 }}>
-          {/* ══ Left: user info ══ */}
-          <div style={{ background: "#fff", borderRadius: 14, padding: "22px 22px 20px", boxShadow: "0 2px 16px rgba(0,0,0,.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
+          {/* ══ Left: user info / main profile ══ */}
+          <div style={{ background: "#fff", borderRadius: 14, padding: "26px", boxShadow: "0 2px 20px rgba(0,0,0,.08)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 26 }}>
               <div
                 onClick={() => isEditing && fileInputRef.current?.click()}
                 style={{
-                  width: 58, height: 58, borderRadius: "50%",
-                  background: (photo && (photo.startsWith("data:") || photo.startsWith("http"))) ? `url(${photo}) center/cover no-repeat` : "linear-gradient(135deg,#4a90d9,#357abd)",
+                  width: 70, height: 70, borderRadius: "50%",
+                  background: (photo && (photo.startsWith("data:") || photo.startsWith("http"))) ? `url(${photo}) center/cover no-repeat` : "#edf2f7",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 28, flexShrink: 0, cursor: isEditing ? "pointer" : "default",
-                  position: "relative", overflow: "hidden"
+                  fontSize: 32, flexShrink: 0, cursor: isEditing ? "pointer" : "default",
+                  position: "relative", overflow: "hidden",
+                  border: "2px solid #e2e8f0"
                 }}
               >
-                {!(photo && (photo.startsWith("data:") || photo.startsWith("http"))) && "🗽"}
+                {!(photo && (photo.startsWith("data:") || photo.startsWith("http"))) && "👤"}
                 {isEditing && (
                   <div style={{
                     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-                    background: "rgba(0,0,0,.3)", display: "flex",
-                    alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff"
+                    background: "rgba(0,0,0,.4)", display: "flex",
+                    alignItems: "center", justifyContent: "center", fontSize: 16, color: "#fff"
                   }}>
                     📷
                   </div>
@@ -158,65 +204,124 @@ export default function ProfilePage({ user, onBack, onLogout }) {
               </div>
               <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handlePhotoChange} />
 
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, paddingTop: 4 }}>
                 {isEditing ? (
-                  <>
-                    <input className="edit-input" value={name} onChange={e => setName(e.target.value)} />
-                    <input className="edit-input" style={{ marginTop: 4 }} value={country} onChange={e => setCountry(e.target.value)} />
-                  </>
+                  <div>
+                    <label className="edit-label">Full Name</label>
+                    <input className="edit-input" value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" />
+                  </div>
                 ) : (
                   <>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#1a1a2e", lineHeight: 1.25 }}>{name}</div>
-                    <div style={{ fontSize: 12, color: "#718096", lineHeight: 1.4, marginTop: 2 }}>{country}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "#1a1a2e", lineHeight: 1.2 }}>{name || "User Name"}</div>
+                    <div style={{ fontSize: 13, color: "#718096", marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      {country || "Unspecified Country"}
+                    </div>
                   </>
                 )}
               </div>
-              <button onClick={handleEditToggle} style={{
-                background: isEditing ? "#00c896" : "#f4f6fa",
-                border: isEditing ? "1.5px solid #00c896" : "1.5px solid #e2e8f0",
-                borderRadius: 20, padding: "7px 15px",
-                fontSize: 12, fontWeight: 500, color: isEditing ? "#fff" : "#3a3a4a",
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-                transition: "all 0.2s"
-              }}>
-                {isEditing ? (
-                  "Save"
-                ) : (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
-                    edit
-                  </>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button onClick={handleEditToggle} disabled={loading} style={{
+                  background: isEditing ? "#1a1a2e" : "#f4f6fa",
+                  border: "none",
+                  borderRadius: 20, padding: "8px 18px",
+                  fontSize: 13, fontWeight: 700, color: isEditing ? "#fff" : "#3a3a4a",
+                  cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6,
+                  transition: "all 0.2s", opacity: loading ? 0.7 : 1
+                }}>
+                  {loading ? "..." : isEditing ? "Save" : "Edit"}
+                </button>
+                {isEditing && (
+                  <button onClick={handleCancel} style={{
+                    background: "#fef2f2",
+                    border: "none",
+                    borderRadius: 20, padding: "8px 18px",
+                    fontSize: 13, fontWeight: 700, color: "#991b1b",
+                    cursor: "pointer", transition: "all 0.2s"
+                  }}>
+                    Cancel
+                  </button>
                 )}
+              </div>
+            </div>
+
+            {/* Details Section */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px 16px" }}>
+              <div>
+                <label className="edit-label">Email Address</label>
+                {isEditing ? (
+                  <input className="edit-input" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{email || "—"}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="edit-label">Phone Number</label>
+                {isEditing ? (
+                  <input className="edit-input" value={phone} onChange={e => setPhone(e.target.value)} />
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{phone || "—"}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="edit-label">Date of Birth</label>
+                {isEditing ? (
+                  <input className="edit-input" type="date" value={dob} onChange={e => setDob(e.target.value)} />
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{dob || "—"}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="edit-label">Gender</label>
+                {isEditing ? (
+                  <select className="edit-select" value={gender} onChange={e => setGender(e.target.value)}>
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e", textTransform: "capitalize" }}>{gender || "—"}</div>
+                )}
+              </div>
+
+              {isEditing && (
+                <div style={{ gridColumn: "span 2" }}>
+                  <label className="edit-label">Country</label>
+                  <select className="edit-select" value={country} onChange={e => setCountry(e.target.value)}>
+                    <option value="">Select Country</option>
+                    <option value="India">India</option>
+                    <option value="USA">United States</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 28, paddingTop: 20, borderTop: "1px solid #f0f0f0" }}>
+              <button className="pf-logout" onClick={onLogout} style={{
+                background: "#1a1a2e", color: "#fff", border: "none",
+                borderRadius: 24, padding: "10px 22px",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 8,
+                transition: "background .18s",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout Account
               </button>
             </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#00796b", marginBottom: 4, letterSpacing: .2 }}>Email</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{u.email}</div>
-            </div>
-
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: "#00796b", marginBottom: 4, letterSpacing: .2 }}>Phone Number</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{u.phone}</div>
-            </div>
-
-            <button className="pf-logout" onClick={onLogout} style={{
-              background: "#1a1a2e", color: "#fff", border: "none",
-              borderRadius: 24, padding: "10px 22px",
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 8,
-              transition: "background .18s",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Logout
-            </button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
