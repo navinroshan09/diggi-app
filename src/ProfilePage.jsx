@@ -1,19 +1,32 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
   const [isEditing, setIsEditing] = useState(false);
-  
-  // Mapping API keys to state
-  const [name, setName] = useState(user?.full_name || user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState(user?.phone || "");
-  const [dob, setDob] = useState(user?.date_of_birth || user?.dob || "");
-  const [gender, setGender] = useState(user?.gender || "");
-  const [country, setCountry] = useState(user?.country || "");
-  const [photo, setPhoto] = useState(user?.profile_pic || user?.photo || ""); // URL/Base64 for the photo
-  
-  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  
+  // Mapping API keys to state with multiple fallbacks
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [country, setCountry] = useState("");
+  const [photo, setPhoto] = useState("");
+
+  const fileInputRef = useRef(null);
+
+  // Sync state when user prop changes (e.g., after login or data fetch)
+  useEffect(() => {
+    if (user) {
+      setName(user.fullName || user.full_name || user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || user.phoneNumber || user.phone_number || "");
+      setDob(user.dateOfBirth || user.date_of_birth || user.dob || "");
+      setGender(user.gender || "");
+      setCountry(user.country || user.address || "");
+      setPhoto(user.profile_pic || user.photo || user.profilePic || "");
+    }
+  }, [user]);
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -22,13 +35,20 @@ export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
       setTimeout(() => {
         const updatedUser = {
           ...user,
+          fullName: name,
           full_name: name,
+          name: name,
           email,
           phone,
+          dateOfBirth: dob,
           date_of_birth: dob,
+          dob: dob,
           gender,
           country,
-          profile_pic: photo
+          address: country,
+          profile_pic: photo,
+          profilePic: photo,
+          photo: photo
         };
         // If onUpdateUser prop at exists, call it to update parent state
         if (typeof onUpdateUser === "function") {
@@ -54,14 +74,16 @@ export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
   };
 
   const handleCancel = () => {
-    // Reset to current user values
-    setName(user?.full_name || user?.name || "");
-    setEmail(user?.email || "");
-    setPhone(user?.phone || "");
-    setDob(user?.date_of_birth || user?.dob || "");
-    setGender(user?.gender || "");
-    setCountry(user?.country || "");
-    setPhoto(user?.profile_pic || user?.photo || "");
+    // Reset to current user values using the same multi-key logic
+    if (user) {
+      setName(user.fullName || user.full_name || user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || user.phoneNumber || user.phone_number || "");
+      setDob(user.dateOfBirth || user.date_of_birth || user.dob || "");
+      setGender(user.gender || "");
+      setCountry(user.country || user.address || "");
+      setPhoto(user.profile_pic || user.photo || user.profilePic || "");
+    }
     setIsEditing(false);
   };
 
