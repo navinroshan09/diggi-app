@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { updateUserProfile } from "./api";
 
 export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -31,32 +32,37 @@ export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
   const handleEditToggle = () => {
     if (isEditing) {
       setLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        const updatedUser = {
-          ...user,
-          fullName: name,
-          full_name: name,
-          name: name,
-          email,
-          phone,
-          dateOfBirth: dob,
-          date_of_birth: dob,
-          dob: dob,
-          gender,
-          country,
-          address: country,
-          profile_pic: photo,
-          profilePic: photo,
-          photo: photo
-        };
-        // If onUpdateUser prop at exists, call it to update parent state
-        if (typeof onUpdateUser === "function") {
-          onUpdateUser(updatedUser);
-        }
-        setIsEditing(false);
-        setLoading(false);
-      }, 800);
+      updateUserProfile({
+        email,
+        full_name: name,
+        phone,
+        country,
+        gender,
+        date_of_birth: dob,
+        profile_pic: photo
+      })
+        .then((response) => {
+          const updatedUser = response?.data || {
+            email,
+            full_name: name,
+            phone,
+            country,
+            gender,
+            date_of_birth: dob,
+            profile_pic: photo
+          };
+
+          if (typeof onUpdateUser === "function") {
+            onUpdateUser(updatedUser);
+          }
+          setIsEditing(false);
+        })
+        .catch((error) => {
+          alert(error.message || "Failed to update profile.");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       setIsEditing(true);
     }
@@ -273,7 +279,7 @@ export default function ProfilePage({ user, onBack, onLogout, onUpdateUser }) {
               <div>
                 <label className="edit-label">Email Address</label>
                 {isEditing ? (
-                  <input className="edit-input" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+                  <input className="edit-input" type="email" value={email} readOnly />
                 ) : (
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{email || "—"}</div>
                 )}

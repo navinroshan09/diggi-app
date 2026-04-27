@@ -49,6 +49,16 @@ export default function App() {
   const [prev, setPrev] = useState("landing");
 
   const isMobile = useIsMobile();
+  const normalizeUser = (u) => {
+    if (!u) return null;
+    return {
+      ...u,
+      name: u.name || u.full_name || u.fullName || "",
+      full_name: u.full_name || u.fullName || u.name || "",
+      fullName: u.fullName || u.full_name || u.name || "",
+      profile_pic: u.profile_pic || u.profilePic || u.photo || "",
+    };
+  };
 
   // ── Hash-based Routing (Direct Links) ──
   useEffect(() => {
@@ -84,7 +94,7 @@ export default function App() {
       {screen === "login" && (
         <LoginPage
           onLogin={u => {
-            setUser(u);
+            setUser(normalizeUser(u));
             go("landing");
           }}
         />
@@ -123,7 +133,7 @@ export default function App() {
       {screen === "profile" && (
         <ProfilePage
           user={user}
-          onUpdateUser={setUser}
+          onUpdateUser={u => setUser(normalizeUser(u))}
           onBack={() => go(prev === "profile" ? "landing" : prev)}
           onLogout={() => { setUser(null); setQuery(""); setLandingQuery(""); go("login"); }}
         />

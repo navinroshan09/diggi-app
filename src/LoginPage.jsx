@@ -5,7 +5,7 @@
 // ============================================================
 
 import { useState } from "react";
-import { loginUser, registerUser } from "./api";
+import { fetchUserProfile, loginUser, registerUser } from "./api";
 
 export default function LoginPage({ onLogin }) {
   const [tab, setTab] = useState("login");   // "login" | "signup"
@@ -25,7 +25,7 @@ export default function LoginPage({ onLogin }) {
   const submit = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    
+
     if (tab === "signup") {
       if (!name || !phone || !dob || !gender || !country) { setError("Please fill in all required fields."); return; }
       if (password !== confPass) { setError("Passwords do not match."); return; }
@@ -33,14 +33,14 @@ export default function LoginPage({ onLogin }) {
 
     setLoading(true);
     try {
-      let res;
       if (tab === "login") {
-        res = await loginUser(email, password);
+        await loginUser(email, password);
       } else {
-        res = await registerUser({
+        await registerUser({
           full_name: name,
           email,
           password,
+          confirm_password: confPass,
           phone,
           date_of_birth: dob,
           gender,
@@ -48,12 +48,9 @@ export default function LoginPage({ onLogin }) {
           profile_pic: pfp ? pfp.name : "", // Sending filename or empty string as placeholder
         });
       }
-      
-      // Success!
-      // You might want to store the token in localStorage here:
-      // if (res.token) localStorage.setItem("diggi_token", res.token);
-      
-      onLogin(res.user);
+
+      const profile = await fetchUserProfile(email);
+      onLogin(profile.data);
     } catch (err) {
       setError(err.message || "An error occurred during authentication.");
     } finally {
@@ -189,7 +186,7 @@ export default function LoginPage({ onLogin }) {
                 <button className="lg-social" style={{ width: "100%", padding: "11px", fontSize: 12, background: "rgba(255,255,255,.1)", border: "1.5px dashed rgba(255,255,255,.3)", borderRadius: 11, color: "rgba(255,255,255,.7)" }}>
                   {pfp ? "Chosen ✓" : "Upload Image"}
                 </button>
-                <input type="file" accept="image/*" onChange={e => setPfp(e.target.files[0])} 
+                <input type="file" accept="image/*" onChange={e => setPfp(e.target.files[0])}
                   style={{ position: "absolute", top: 0, left: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }} />
               </div>
             </div>
@@ -201,7 +198,7 @@ export default function LoginPage({ onLogin }) {
             <input className="lg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} placeholder="Email Address"
               style={{ width: "100%", background: "rgba(255,255,255,.12)", border: "1.5px solid rgba(255,255,255,.22)", borderRadius: 11, padding: "12px 15px", fontSize: 14, color: "#fff" }} />
           </div>
-          
+
           {/* password */}
           <div>
             <label style={{ fontSize: 11, color: "rgba(255,255,255,.62)", letterSpacing: .8, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Password</label>
@@ -264,11 +261,11 @@ export default function LoginPage({ onLogin }) {
                 transition: "background .18s",
               }}>
                 <svg width="18" height="18" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.7 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.3 0-11.57-4.2-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-                  <path fill="none" d="M0 0h48v48H0z"/>
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.7 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.3 0-11.57-4.2-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                  <path fill="none" d="M0 0h48v48H0z" />
                 </svg>
                 {p}
               </button>
@@ -278,11 +275,11 @@ export default function LoginPage({ onLogin }) {
           <div style={{ textAlign: "center", marginTop: 10 }}>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,.5)" }}>
               {tab === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button 
+              <button
                 onClick={() => { setTab(tab === "login" ? "signup" : "login"); setError(""); }}
-                style={{ 
-                  background: "none", border: "none", color: "#fff", fontWeight: 700, 
-                  cursor: "pointer", padding: 0, textDecoration: "underline" 
+                style={{
+                  background: "none", border: "none", color: "#fff", fontWeight: 700,
+                  cursor: "pointer", padding: 0, textDecoration: "underline"
                 }}
               >
                 {tab === "login" ? "Sign up" : "Log in"}
