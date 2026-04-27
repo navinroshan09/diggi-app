@@ -1,7 +1,7 @@
 const DEFAULT_SUMMARY_PATH = "/summary";
 
 function withProtocol(url) {
-  if (!url || /^https?:\/\//i.test(url)) {
+  if (!url || /^https?:\/\//i.test(url) || url.startsWith("/")) {
     return url;
   }
 
@@ -9,12 +9,20 @@ function withProtocol(url) {
 }
 
 export function getBaseApiUrl() {
+  // Use /api proxy path in production (Vercel) to avoid Mixed Content errors
+  if (process.env.NODE_ENV === "production") {
+    console.log("DEBUG: Production mode detected, using /api proxy");
+    return "/api";
+  }
+
   const configuredUrl = process.env.REACT_APP_BACKEND_API_URL?.trim();
   console.log("DEBUG: REACT_APP_BACKEND_API_URL =", configuredUrl);
+  
   if (!configuredUrl) {
     console.warn("WARNING: REACT_APP_BACKEND_API_URL is not defined in .env");
     return "";
   }
+  
   const url = withProtocol(configuredUrl).replace(/\/+$/, "");
   console.log("DEBUG: Resolved Base API URL =", url);
   return url;
